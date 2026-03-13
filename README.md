@@ -55,21 +55,21 @@ Perfect balance between speed, usability, and effectiveness for modern bug bount
 
 - **Bug bounty hunting**  
   Quickly find leaked API keys / tokens in client-side JavaScript  
-  <code>
+  ```sh
   ./leakpeek target.com "stripe:sk_live_" "aws:AKIA" depth:3 workers:60
-  </code>
+  ```
 
 - **Security audits & pentests**  
   Check staging / production frontends for hardcoded credentials  
-  <code>
+  ```sh
   ./leakpeek staging.company.com refmt:30-80
-  </code>
+  ```
 
 - **Post-acquisition / domain takeover checks**  
   Did the previous owner leave secrets in static assets?  
-  <code>
+  ```sh
   ./leakpeek old-assets.example.com depth:2
-  </code>
+  ```
 
 - **Self-auditing your own apps/SaaS**  
   Make sure no dev accidentally committed/leaked keys to public JS/CSS  
@@ -83,30 +83,30 @@ Perfect balance between speed, usability, and effectiveness for modern bug bount
 
 ## Example Output
 
-<code>
+```sh
 supabase_jwt  |  https://example.com/static/main.chunk.js
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 
 aws_access_key  |  https://cdn.example.com/config.js
 const awsKey = "AKIAJ4M3K7L9P2Q8R5T0V";
 
-</code>
+```
 
 ## Getting Started
 
 1. Save the code as `leakpeek.go`
 2. Build it:
-   <code>
+   ```sh
    go build -o leakpeek leakpeek.go
-   </code>
+   ```
 3. Run basic scan:
-   <code>
+   ```sh
    ./leakpeek https://target.com depth:2 workers:50 refmt:20-70 "key:AIza[A-Za-z0-9_-]{35}"
-   </code>
+   ```
 4. Use many patterns at once:
-   <code>
+   ```sh
    ./leakpeek https://example.com depth:2 workers:60 $(grep -v '^#' secrets-regex.txt | tr '\n' ' ')
-   </code>
+   ```
 
 ## Future Plans & Wishlist
 
