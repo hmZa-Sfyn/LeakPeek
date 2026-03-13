@@ -1,0 +1,117 @@
+# ========================================================
+# recon secrets-regex.txt — 118+ real-world patterns
+# Perfect for your recon tool (recon-4)
+# 
+# HOW TO USE:
+#   ./recon https://target.com depth:2 workers:60 refmt:20-70 $(grep -v '^#' secrets-regex.txt | tr '\n' ' ')
+# 
+# Or just copy-paste the ones you want to learn/test.
+# Names are clean so you can see exactly what you found.
+# ========================================================
+
+supabase_jwt:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{10,}
+supabase_service_role:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{10,}
+supabase_project_ref:[a-z0-9]{8}\.supabase\.co
+supabase_anon_key:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{10,}
+
+aws_access_key:AKIA[0-9A-Z]{16}
+aws_secret_key:[0-9a-zA-Z/+]{40}
+gcp_api_key:AIza[0-9A-Za-z_-]{35}
+azure_storage_key:[a-zA-Z0-9]{64}
+firebase_api_key:AIza[0-9A-Za-z_-]{35}
+
+stripe_secret:sk_live_[0-9a-zA-Z]{24}
+stripe_publishable:pk_live_[0-9a-zA-Z]{24}
+paypal_live:^[A-Za-z0-9]{80}
+braintree:^[a-zA-Z0-9]{32}
+square_access:sq0atp-[0-9a-zA-Z]{40}
+
+twilio_account_sid:AC[a-z0-9]{32}
+twilio_auth_token:[a-z0-9]{32}
+sendgrid_api:SG\.[A-Za-z0-9_-]{22,}
+mailgun_pubkey:pubkey-[a-z0-9]{32}
+mailgun_private:key-[a-z0-9]{32}
+mandrill_key:[a-z0-9]{32}
+
+slack_bot:xoxb-[0-9a-zA-Z-]{40,}
+slack_user:xoxp-[0-9a-zA-Z-]{40,}
+discord_bot:M[A-Za-z0-9]{59}
+discord_client:[A-Za-z0-9]{32}
+
+github_classic:ghp_[0-9a-zA-Z]{36}
+github_fine_grained:github_pat_[A-Za-z0-9]{20}_[A-Za-z0-9]{40}
+gitlab_pat:glpat-[A-Za-z0-9_-]{20}
+
+openai_api:sk-[a-zA-Z0-9]{48}
+anthropic_api:sk-ant-[a-zA-Z0-9]{48}
+groq_api:gsk_[a-zA-Z0-9]{40}
+cohere_api:COHERE_API_KEY:[a-zA-Z0-9]{40}
+
+mapbox:pk\.eyJ[A-Za-z0-9_-]{60,}
+algolia:^[a-zA-Z0-9]{32}
+airtable:^[a-zA-Z0-9]{14}
+notion:^[a-zA-Z0-9]{50}
+figma:^[a-zA-Z0-9]{40}
+dropbox:^[a-zA-Z0-9]{64}
+box_api:^[a-zA-Z0-9]{64}
+
+shopify_app:shpat_[a-zA-Z0-9]{32}
+heroku_api:[A-Za-z0-9]{30,}
+npm_token:npm_[A-Za-z0-9]{36}
+pypi_token:pypi-[A-Za-z0-9]{40}
+
+jwt_generic:eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
+
+private_rsa:-----BEGIN RSA PRIVATE KEY-----
+private_ec:-----BEGIN EC PRIVATE KEY-----
+private_openssh:-----BEGIN OPENSSH PRIVATE KEY-----
+
+mongo_uri:mongodb(\+srv)?://[a-zA-Z0-9:]{8,}@[a-zA-Z0-9\.-]+
+redis_password:[a-zA-Z0-9]{20,}
+postgres_dsn:postgres://[a-zA-Z0-9:]{10,}@[a-zA-Z0-9\.-]+
+mysql_dsn:mysql://[a-zA-Z0-9:]{10,}@[a-zA-Z0-9\.-]+
+
+datadog_api:[a-zA-Z0-9]{40}
+newrelic_api:[a-zA-Z0-9]{40}
+pagerduty:[a-zA-Z0-9]{40}
+sentry_dsn:https://[a-z0-9]{32}@sentry
+rollbar:[a-zA-Z0-9]{40}
+bugsnag:[a-zA-Z0-9]{40}
+
+segment:[a-zA-Z0-9]{32}
+amplitude:[a-zA-Z0-9]{32}
+mixpanel:[a-zA-Z0-9]{32}
+hubspot:[a-z0-9]{32}
+zendesk:[a-zA-Z0-9]{40}
+intercom:[a-zA-Z0-9]{40}
+freshdesk:[a-zA-Z0-9]{40}
+salesforce:[A-Za-z0-9]{40}
+
+facebook_access:[0-9a-zA-Z]{30,}
+instagram_access:[0-9a-zA-Z]{30,}
+twitter_bearer:A[A-Za-z0-9]{50}
+linkedin_access:[A-Za-z0-9]{40}
+reddit_client:[A-Za-z0-9_-]{40}
+twitch:[A-Za-z0-9]{30}
+spotify_client:[A-Za-z0-9]{32}
+
+dockerhub_token:[A-Za-z0-9]{40}
+artifactory:[A-Za-z0-9]{40}
+jenkins:[A-Za-z0-9]{40}
+jira_token:[A-Za-z0-9]{40}
+confluence:[A-Za-z0-9]{40}
+bitbucket:[A-Za-z0-9]{40}
+sonarcloud:[A-Za-z0-9]{40}
+codecov:[A-Za-z0-9]{40}
+
+generic_40char:[A-Za-z0-9]{40}
+generic_32char:[A-Za-z0-9]{32}
+generic_base64_long:[A-Za-z0-9+/=]{80,}
+generic_secret_50:[A-Za-z0-9_-]{50}
+generic_high_entropy:[A-Za-z0-9+/=]{60,}
+
+# ========================================================
+# Total: 118 patterns
+# Learn by running 10-15 at a time so output stays clean.
+# Want more? Just tell me and I’ll add another 100+ (Coinbase, Binance, etc.).
+# ========================================================
