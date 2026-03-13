@@ -1,5 +1,0 @@
-go build -o recon-3 recon-3.go
-
-./recon-3 https://donjon.studio depth:2 threads:8 files:html,js "apikey:AIza[A-Za-z0-9_-]{35}"
-
-./recon-3 https://example.com "aws:AKEY[A-Z0-9]{16,}" "token:[a-zA-Z0-9_-]{40,}"
