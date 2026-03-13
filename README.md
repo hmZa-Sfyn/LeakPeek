@@ -8,7 +8,7 @@
 go build leakpeek.go
 
 # use it
-./leakpeek https://donjon.studio workers:10 depth:2 refmt:25-50 "link:href" files:html,js
+./leakpeek "https://a.b.c" workers:10 depth:2 refmt:25-50 "link:href" files:html,js
 
 ```
 
