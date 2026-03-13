@@ -14,13 +14,12 @@ go build leakpeek.go
 
 ## Real usage!
 ```sh
-(myenv)  ✘ hmza@0root  ~/workspaces/hamza/LeakPeek   main  ./leakpeek https://localhost:5000 workers:10 depth:2 "key:AIza[A-Za-z0-9_-]{35}" "aws:AKIA[A-Z0-9]{16}" refmt:25-25 
-→ https://localhost:5000   depth:2   workers:10   context:25-25
+(myenv)  hmza@0root  ~/workspaces/hamza/LeakPeek   main  ./leakpeek https://whatever.studio workers:10 depth:2 "key:AIza[A-Za-z0-9_-]{35}" "aws:AKIA[A-Z0-9]{16}" refmt:25-25
+[LeakPeek] starting → https://whatever.studio   depth:2   workers:10   context:25-25
+[format] timestamp      rule    url     "match" context
+---------------------------------------------------------------
+2026-03-13T18:16:58Z    key     https://whatever.studio/assets/index-D9vEu-ue.js  "AIzaSyDmMtoBo8ecToDwLsKxxxxxxxxxxxxxxxx"       onst sa={GEMINI_API_KEY:"AIzaSyDmMtoBo8ecToDwLsKxxxxxxxxxxxxxxxx",DEEPSEEK_API_KEY:"sk-03
 
-key  |  https://localhost:5000/assets/index-D9vEu-ue.js
-onst sa={GEMINI_API_KEY:"AIzaSyDmMtoBo8ecToDwLsK6xxxxxxxxxxxxxxx",DEEPSEEK_API_KEY:"sk-03
-
-(myenv)  ✘ hmza@0root  ~/workspaces/hamza/LeakPeek   main  
 ```
 # What is leakpeek?
 - Web recon tool to search for api leaks, and basically works like a web-grep! with builtin crawl, very fast!
