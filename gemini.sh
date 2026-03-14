@@ -1,81 +1,168 @@
 #!/usr/bin/env bash
-# gemini_test.sh
-# Tests all Google API keys from geminiapi.txt against Gemini 1.5-flash
-# One key per line, ignores empty lines and comments (#)
+# =============================================================================
+# gemini_test.sh   —   Multi-service Google API Key Tester (2026 edition)
+# Tests leaked AIzaSy... keys against Gemini + other common Google services
+# Reads keys from geminiapi.txt (one per line, skips # comments & empty lines)
+#
+# Services tested (stops on first success per key):
+#   1. Gemini 1.5 Flash
+#   2. Google Maps Static
+#   3. YouTube Data v3
+#   4. Google Drive v3
+#   5. Custom Search JSON
+# =============================================================================
 
 set -u
-set -e
 
 KEYS_FILE="geminiapi.txt"
-MODEL="gemini-1.5-flash"
-ENDPOINT="https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent"
+DELAY_BETWEEN_KEYS=1.2     # seconds — be nice to Google
+DELAY_BETWEEN_TESTS=0.5
 
-if [[ ! -f "${KEYS_FILE}" ]]; then
-  echo "Error: File not found: ${KEYS_FILE}"
-  exit 1
-fi
+# Colors (works in most terminals)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-echo "Testing keys from ${KEYS_FILE}..."
-echo "Model: ${MODEL}"
-echo "───────────────────────────────────────────────"
+# ────────────────────────────────────────────────────────────────
+# Helper: short key display
+short_key() {
+    local k="$1"
+    if [ ${#k} -gt 12 ]; then
+        echo "${k:0:6}...${k: -4}"
+    else
+        echo "$k"
+    fi
+}
+
+# ────────────────────────────────────────────────────────────────
+echo -e "${YELLOW}Google API Key Multi-Tester${NC}"
+echo "Reading from: $KEYS_FILE"
 echo ""
 
-count=0
-success_count=0
+if [ ! -f "$KEYS_FILE" ]; then
+    echo -e "${RED}Error: File not found → $KEYS_FILE${NC}"
+    exit 1
+fi
 
-while IFS= read -r line || [[ -n "${line}" ]]; do
-  # Skip empty lines and comments
-  line=$(echo "${line}" | xargs)  # trim whitespace
-  [[ -z "${line}" ]] && continue
-  [[ "${line}" =~ ^# ]] && continue
+# Load keys (skip comments & empty lines)
+mapfile -t KEYS < <(grep -vE '^\s*(#|$)' "$KEYS_FILE" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
-  ((count++))
+if [ ${#KEYS[@]} -eq 0 ]; then
+    echo -e "${RED}No keys found in the file.${NC}"
+    exit 1
+fi
 
-  key="${line}"
-  display_key="${key:0:6}...${key:(-4)}"
+unique_count=$(printf '%s\n' "${KEYS[@]}" | sort -u | wc -l)
+echo "Found ${#KEYS[@]} lines → ${YELLOW}$unique_count unique keys${NC}"
+echo "Services order: Gemini → Maps → YouTube → Drive → CustomSearch"
+echo "───────────────────────────────────────────────────────────────"
+echo ""
 
-  echo -n "Key ${count} (${display_key}) → "
+declare -A RESULTS
 
-  response=$(curl -s -m 10 \
-    -H "Content-Type: application/json" \
-    -d '{"contents":[{"parts":[{"text":"hi"}]}]}' \
-    "${ENDPOINT}?key=${key}" 2>/dev/null || true)
+for ((i=0; i<${#KEYS[@]}; i++)); do
+    key="${KEYS[i]}"
+    sk=$(short_key "$key")
+    printf "Key %2d/%d  %-14s " "$((i+1))" "${#KEYS[@]}" "$sk"
 
-  # Check common status patterns
-  if echo "${response}" | grep -q '"candidates"'; then
-    echo "OK (valid key - got candidates)"
-    ((success_count++))
-    # Show the actual reply if present
-    reply=$(echo "${response}" | grep -o '"text": *"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
-    [[ -n "${reply}" ]] && echo "    Reply: ${reply}"
-  elif echo "${response}" | grep -qi "invalid" || echo "${response}" | grep -qi "not valid"; then
-    echo "FAIL - Invalid / not authorized"
-  elif echo "${response}" | grep -qi "quota" || echo "${response}" | grep -qi "limit"; then
-    echo "FAIL - Quota exceeded or rate limited"
-  elif echo "${response}" | grep -qi "permission" || echo "${response}" | grep -qi "403"; then
-    echo "FAIL - Permission denied (likely API not enabled or restricted)"
-  elif echo "${response}" | grep -qi "404"; then
-    echo "FAIL - Endpoint/model not found"
-  else
-    # Show beginning of raw error for debugging
-    short_err=$(echo "${response}" | head -c 180 | tr -d '\n' | sed 's/"/\"/g')
-    [[ -z "${short_err}" ]] && short_err="No response / timeout / curl error"
-    echo "FAIL - ${short_err}"
-  fi
+    found=false
 
-  # Tiny delay to be polite to the API
-  sleep 0.4
+    # 1. Gemini
+    curl -s -m 9 -H 'Content-Type: application/json' \
+        -d '{"contents":[{"parts":[{"text":"hi"}]}]}' \
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key" > /tmp/gemini_resp 2>/dev/null
 
-done < "${KEYS_FILE}"
+    if grep -q '"candidates"' /tmp/gemini_resp; then
+        echo -e "${GREEN}OK Gemini${NC}"
+        RESULTS["$key"]="Gemini"
+        found=true
+    fi
+
+    if ! $found; then
+        # 2. Maps Static
+        http_code=$(curl -s -m 6 -o /dev/null -w "%{http_code}" \
+            "https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=1x1&key=$key")
+
+        if [ "$http_code" = "200" ]; then
+            echo -e "${GREEN}OK Maps${NC}"
+            RESULTS["$key"]="Maps"
+            found=true
+        fi
+    fi
+
+    if ! $found; then
+        # 3. YouTube
+        yt_resp=$(curl -s -m 6 \
+            "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=test&key=$key")
+
+        if echo "$yt_resp" | grep -q '"items"'; then
+            echo -e "${GREEN}OK YouTube${NC}"
+            RESULTS["$key"]="YouTube"
+            found=true
+        fi
+    fi
+
+    if ! $found; then
+        # 4. Drive
+        drive_code=$(curl -s -m 6 -o /dev/null -w "%{http_code}" \
+            "https://www.googleapis.com/drive/v3/about?fields=user&key=$key")
+
+        if [ "$drive_code" = "200" ]; then
+            echo -e "${GREEN}OK Drive${NC}"
+            RESULTS["$key"]="Drive"
+            found=true
+        fi
+    fi
+
+    if ! $found; then
+        # 5. Custom Search (dummy CX — will usually 400/403 unless configured)
+        cs_resp=$(curl -s -m 6 \
+            "https://www.googleapis.com/customsearch/v1?cx=0123456789:qiwtest123&q=test&key=$key")
+
+        if echo "$cs_resp" | grep -q '"searchInformation"'; then
+            echo -e "${GREEN}OK CustomSearch${NC}"
+            RESULTS["$key"]="CustomSearch"
+            found=true
+        fi
+    fi
+
+    if ! $found; then
+        echo -e "${RED}ALL FAILED${NC}"
+        RESULTS["$key"]="None"
+    fi
+
+    sleep "$DELAY_BETWEEN_KEYS"
+done
 
 echo ""
-echo "───────────────────────────────────────────────"
-echo "Finished. Tested ${count} keys. Working: ${success_count}"
+echo "───────────────────────────────────────────────────────────────"
+echo -e "${YELLOW}SUMMARY${NC}"
 
-if (( success_count > 0 )); then
-  echo ""
-  echo "WARNING ───────────────────────────────────────"
-  echo "Any key that worked is almost certainly already leaked and monitored."
-  echo "Do NOT use it for anything real — it can get revoked any moment or rack up charges."
-  echo "→ Get your own free key here: https://aistudio.google.com/app/apikey"
+working=0
+for key in "${!RESULTS[@]}"; do
+    sk=$(short_key "$key")
+    res="${RESULTS[$key]}"
+    if [ "$res" != "None" ]; then
+        echo -e "  $sk → ${GREEN}$res${NC}"
+        ((working++))
+    else
+        echo -e "  $sk → ${RED}None${NC}"
+    fi
+done
+
+if [ $working -eq 0 ]; then
+    echo -e "  ${RED}No working keys found on any service.${NC}"
+else
+    echo ""
+    echo -e "${YELLOW}WARNING — IMPORTANT (March 2026)${NC}"
+    echo "  Any key that responded is almost certainly leaked and monitored."
+    echo "  Google aggressively revokes abused/leaked Gemini keys."
+    echo "  Using them risks instant quota burn, billing spikes, or permanent ban."
+    echo "  → Generate your own fresh key here:"
+    echo "    https://aistudio.google.com/app/apikey"
 fi
+
+echo ""
+echo "Done."
+rm -f /tmp/gemini_resp 2>/dev/null
